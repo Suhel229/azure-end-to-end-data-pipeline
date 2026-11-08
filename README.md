@@ -4,7 +4,7 @@ An end-to-end data engineering project on Azure. It moves sales data from a SQL 
 
 **Dataset:** Microsoft's public sample database `AdventureWorksLT2022` (schema `SalesLT`, 10 tables). No real customer data is used.
 
-**Based on:** the tutorial "Azure End-To-End Data Engineering Project for Beginners" by Luke Byrne. I followed the tutorial's overall design, then debugged and changed parts myself. See "What I changed or debugged" below.
+**Based on:** the tutorial "Azure End-To-End Data Engineering Project for Beginners" by Luke Byrne. I followed the tutorial's overall design, then debugged and changed parts myself. See "What I changed or debugged beyond the tutorial" below.
 
 > **Status:** The Azure free trial that hosted this project has expired. The Databricks notebooks and the ADF dataset and linked service definitions were lost with it. What survives is in this repo: the ADF pipeline JSON, the SQL scripts, the Power BI file and screenshots. The logic of the lost parts is described in plain words below.
 
@@ -55,7 +55,7 @@ Proof: `screenshots/silver.png` shows `silver/SalesLT/` with all 10 table folder
 
 The notebook `Silver to Gold - Extended` runs after bronze to silver. It reads from `silver` and writes to `gold` in **Delta** format, one folder per table. Its first section is titled "Single Table Column Transformations".
 
-The gold tables have snake_case column names. For example, AddressID in the source database became address_id.
+The gold tables have snake_case column names. For example, `AddressID` in the source database became `address_id`.
 
 Proof: `screenshots/gold.png` shows `gold/SalesLT/` with all 10 table folders. `screenshots/databricks-silver-to-gold.png` shows the notebook listing the silver folders.
 
@@ -74,8 +74,6 @@ The stored procedure in `synapse/sp_CreateSQLServerlessView_gold.sql` takes a ta
 
 Row count example from Table view: `Address` has 450 rows.
 
-Row count example: the Address table has 450 rows.
-
 Proof: `powerbi/dashboard.png`, `powerbi/model.png` and `powerbi/table-view.png`.
 
 ## Problems I hit and how I fixed them
@@ -83,12 +81,11 @@ Proof: `powerbi/dashboard.png`, `powerbi/model.png` and `powerbi/table-view.png`
 | Problem | Cause | Fix |
 |---|---|---|
 | ADF Copy failed with `LeaseIdMissing` (`PreconditionFailed`) on `bronze` | In the sink dataset properties I had typed `item().SchemaName` and `item().TableName` as plain text. ADF did not evaluate them, so every table wrote to the same literal file path and parallel runs fought over the lease. | Entered both as dynamic content: `@item().SchemaName` and `@item().TableName`. Deleted the junk folder from `bronze` and re-ran. |
-| Databricks compute would not start: "No available compute capacity" | [FILL IN: what the cause turned out to be] | [FILL IN: what you did, for example changed VM size or region, or used serverless] |
 
 ## What I changed or debugged beyond the tutorial
 
-- The notebooks read storage with abfss:// paths directly, instead of mounting the storage as the video does.
-- Fixed a plain-text item() mistake that made all tables write to one file (see the bug table).
+- The notebooks read storage with `abfss://` paths directly, instead of mounting the storage as the video does.
+- Fixed a plain-text `item()` mistake that made all tables write to one file (see the bug table).
 
 ## What I would improve next
 
@@ -103,11 +100,11 @@ Proof: `powerbi/dashboard.png`, `powerbi/model.png` and `powerbi/table-view.png`
 
 ```
 ├── README.md
-├── adf/Copy_All_Tables.json            # your email in notebook paths is replaced with a placeholder
-├── sql/Azure_SQL_Credential_Creation.sql   # read-only login setup, placeholders only
+├── adf/Copy_All_Tables.json                 # personal email in notebook paths replaced with a placeholder
+├── sql/Azure_SQL_Credential_Creation.sql    # read-only login setup, placeholders only
 ├── synapse/sp_CreateSQLServerlessView_gold.sql
 ├── powerbi/AZURE_PROJECT.pbix, dashboard.png, model.png, table-view.png
-└── screenshots/                        # bronze, silver, gold, containers, databricks x2, adf-pipeline
+└── screenshots/                             # bronze, silver, gold, containers, databricks x2, adf-pipeline
 ```
 
 Not included: Databricks notebooks, ADF datasets and linked services (lost when the trial expired), and any credentials.
