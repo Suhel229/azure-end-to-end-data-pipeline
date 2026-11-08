@@ -67,10 +67,11 @@ The stored procedure in `synapse/sp_CreateSQLServerlessView_gold.sql` takes a ta
 
 `powerbi/AZURE_PROJECT.pbix` imports the gold views. The model has 11 tables: the 10 above plus `SalesLT_AddressView`. The report page shows:
 
-- Card: number of products (295)
-- Card: total sales (708.69K)
+- Cards: number of products (295), total sales (708.69K) and total orders (32)
 - Donut chart: customers by title (Mr. 490, Ms. 340, other titles 17)
-- Slicers: customer title and product category
+- Bar chart: sales by product category (Touring Bikes is highest at 221K)
+- Table: top 10 products by sales
+- Dropdown filters: customer title and product category
 
 Row count example from Table view: `Address` has 450 rows.
 
@@ -81,11 +82,13 @@ Proof: `powerbi/dashboard.png`, `powerbi/model.png` and `powerbi/table-view.png`
 | Problem | Cause | Fix |
 |---|---|---|
 | ADF Copy failed with `LeaseIdMissing` (`PreconditionFailed`) on `bronze` | In the sink dataset properties I had typed `item().SchemaName` and `item().TableName` as plain text. ADF did not evaluate them, so every table wrote to the same literal file path and parallel runs fought over the lease. | Entered both as dynamic content: `@item().SchemaName` and `@item().TableName`. Deleted the junk folder from `bronze` and re-ran. |
+| Power BI charts showed meaningless numbers | I first built a bar chart that summed ID columns (`sales_order_detail_id` by `product_category_id`). | Rebuilt it with `ProductCategory` name and the sum of `line_total`. The category totals now add up to the 708.69K total sales. |
 
 ## What I changed or debugged beyond the tutorial
 
 - The notebooks read storage with `abfss://` paths directly, instead of mounting the storage as the video does.
 - Fixed a plain-text `item()` mistake that made all tables write to one file (see the bug table).
+- Built and corrected the Power BI report myself: category sales, top 10 products, order count, and dropdown filters.
 
 ## What I would improve next
 
@@ -94,7 +97,7 @@ Proof: `powerbi/dashboard.png`, `powerbi/model.png` and `powerbi/table-view.png`
 - **Retries and alerts.** Every activity has `retry` set to 0 and there is no failure alert. Add retries and an email alert on failure.
 - **Data quality checks.** Compare row counts between bronze, silver and gold for each table and fail the pipeline if they differ.
 - **Cleaner model.** Drop sensitive-looking columns such as `password_hash` before the report, remove the duplicate `SalesLT_AddressView`, and review relationship filter directions.
-- **Richer report.** Add sales by product category, sales over time and top products. The model already has the data.
+- **Time trends.** The sample orders fall in a single year (2008), so a sales-over-time chart was not useful. A larger dataset would allow one.
 
 ## Repo contents
 
